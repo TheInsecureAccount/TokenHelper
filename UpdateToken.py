@@ -1,0 +1,100 @@
+# -*- coding: UTF-8 -*-
+import requests as req
+import json
+import os
+from base64 import b64encode
+from nacl import encoding, public
+
+app_num = os.getenv("APP_NUM")
+if app_num == "":
+    app_num = "1"
+gh_token = os.getenv("GH_TOKEN")
+gh_repo = os.getenv("GH_REPO")
+# ms_token=os.getenv('MS_TOKEN')
+# client_id=os.getenv('CLIENT_ID')
+# client_secret=os.getenv('CLIENT_SECRET')
+Auth = r"token " + gh_token
+geturl = r"https://api.github.com/repos/" + gh_repo + r"/actions/secrets/public-key"
+# puturl=r'https://api.github.com/repos/'+gh_repo+r'/actions/secrets/MS_TOKEN'
+key_id = "wangziyingwen"
+
+
+# Get Public Key
+def get_public_key(auth, get_url):
+    headers = {"Accept": "application/vnd.github.v3+json", "Authorization": auth}
+    html = req.get(get_url, headers=headers)
+    json_text = json.loads(html.text)
+    if "key" in json_text:
+        print("Public key retrieved successfully")
+    else:
+        print("Failed to retrieve public key. Please check if GH_TOKEN format and settings in secret are correct.")
+    public_key = json_text["key"]
+    global key_id
+    key_id = json_text["key_id"]
+    return public_key
+
+
+# Microsoft refresh_token retrieval
+def getmstoken(ms_token, appnum):
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": ms_token,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": "http://localhost:53682/",
+    }
+    html = req.post("https://login.microsoftonline.com/common/oauth2/v2.0/token", data=data, headers=headers)
+    jsontxt = json.loads(html.text)
+    if "refresh_token" in jsontxt:
+        print("Microsoft key retrieval successful for account/application " + str(appnum))
+    else:
+        print(
+            "Microsoft key retrieval failed for account/application "
+            + str(appnum)
+            + "\n"
+            + "Please check if CLIENT_ID, CLIENT_SECRET, and MS_TOKEN formats and contents in secret are correct, then reset"
+        )
+    refresh_token = jsontxt["refresh_token"]
+    access_token = jsontxt["access_token"]
+    return refresh_token
+
+
+# Should access be saved to reduce Microsoft token refresh rate???
+
+
+# Encrypt token
+def createsecret(public_key, secret_value):
+    public_key = public.PublicKey(public_key.encode("utf-8"), encoding.Base64Encoder())
+    sealed_box = public.SealedBox(public_key)
+    encrypted = sealed_box.encrypt(secret_value.encode("utf-8"))
+    return b64encode(encrypted).decode("utf-8")
+
+
+# Upload token
+def setsecret(encrypted_value, key_id, puturl, appnum):
+    headers = {"Accept": "application/vnd.github.v3+json", "Authorization": Auth}
+    data_str = r'{"encrypted_value":"' + encrypted_value + r'",' + r'"key_id":"' + key_id + r'"}'
+    putstatus = req.put(puturl, headers=headers, data=data_str)
+    if putstatus.status_code >= 300:
+        print(
+            r"Microsoft key upload failed for account/application "
+            + str(appnum)
+            + ", please check if GH_TOKEN format and settings in secret are correct"
+        )
+    else:
+        print(r"Microsoft key upload successful for account/application " + str(appnum))
+    return putstatus
+
+
+# Call
+for a in range(1, int(app_num) + 1):
+    client_id = os.getenv("CLIENT_ID_" + str(a))
+    client_secret = os.getenv("CLIENT_SECRET_" + str(a))
+    ms_token = os.getenv("MS_TOKEN_" + str(a))
+    if a == 1:
+        puturl = r"https://api.github.com/repos/" + gh_repo + r"/actions/secrets/MS_TOKEN"
+    else:
+        puturl = r"https://api.github.com/repos/" + gh_repo + r"/actions/secrets/MS_TOKEN_" + str(a)
+    encrypted_value = createsecret(get_public_key(Auth, geturl), getmstoken(ms_token, a))
+    setsecret(encrypted_value, key_id, puturl, a)
