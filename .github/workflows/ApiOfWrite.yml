@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@master
     - name: Install requests #安装requests模块
       run: |
-        pip install requests
+        pip install requests XlsxWriter
     - name: run api.Read #api调用
       env: 
         #github的账号信息
