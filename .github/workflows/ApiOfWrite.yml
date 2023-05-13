@@ -10,7 +10,7 @@ on:
   #  branches: 
   #    - master
   schedule:
-    - cron: '12 */10 * * 1-5'
+    - cron: '12 */12 * * 1-5'
   watch:
     types: [started]
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
     - name: Install requests #安装requests模块
       run: |
         pip install requests XlsxWriter
-    - name: run api.Read #api调用
+    - name: run api.Write #api调用
       env: 
         CITY: ${{ secrets.CITY }}
         #github的账号信息
