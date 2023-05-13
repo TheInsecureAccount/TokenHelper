@@ -27,7 +27,7 @@ config = {
 if not app_num or app_num == '':
     app_num = '1'
 city=os.getenv('CITY')
-if city == '':
+if not city or city == '':
     city = 'Beijing'
 access_token_list=['wangziyingwen']*int(app_num)
 
