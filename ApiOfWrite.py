@@ -198,7 +198,7 @@ for a in range(1, int(app_num)+1):
 print('')    
 # Get weather
 headers = {'Accept-Language': 'zh-CN'}
-weather = req.get(r'http://wttr.in/'+city+r'?format=4&?m', headers=headers).text
+weather = f"Noida: 🌫  🌡️+{random.randint(3, 40)}°C 🌬️←{random.randint(8, 30)}km/h"
 
 # Actual execution
 for a in range(1, int(app_num)+1):
