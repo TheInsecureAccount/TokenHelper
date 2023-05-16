@@ -73,7 +73,7 @@ def apiReq(method, a, url, data='QAQ'):
         print('        Operation successful')
     else:
         print('        Operation failed')
-	print('        Error response: {}'.format(posttext.text))
+        print('        Error response: {}'.format(posttext.text))
     return posttext.text
           
 
