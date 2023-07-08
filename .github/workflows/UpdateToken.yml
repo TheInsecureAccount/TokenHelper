@@ -58,3 +58,5 @@ jobs:
         CLIENT_SECRET_n: ${{ secrets.CLIENT_SECRET_n }}
       run: |
         python UpdateToken.py
+    - uses: gautamkrishnar/keepalive-workflow@v1
+    
